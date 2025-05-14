@@ -598,6 +598,9 @@ export interface Repository {
     name?: string;
     connectionState: ConnectionState;
     project?: string;
+    useServicePrincipal: boolean;
+    azServicePrincipalClientId: string;
+    azServicePrincipalClientSecret: string;
     username?: string;
     password?: string;
     bearerToken?: string;

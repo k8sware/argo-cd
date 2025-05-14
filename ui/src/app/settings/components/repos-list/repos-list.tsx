@@ -41,6 +41,9 @@ export interface NewHTTPSRepoParams {
     proxy: string;
     noProxy: string;
     project?: string;
+    useServicePrincipal: boolean;
+    azServicePrincipalClientId?: string;
+    azServicePrincipalClientSecret?: string;
     forceHttpBasicAuth?: boolean;
     enableOCI: boolean;
     // write should be true if saving as a write credential.
@@ -99,6 +102,9 @@ interface NewHTTPSRepoCredsParams {
     enableOCI: boolean;
     // write should be true if saving as a write credential.
     write: boolean;
+    useServicePrincipal: boolean;
+    azServicePrincipalClientId?: string;
+    azServicePrincipalClientSecret?: string;
     useAzureWorkloadIdentity: boolean;
 }
 
@@ -197,7 +203,7 @@ export class ReposList extends React.Component<
     }
 
     private onChooseDefaultValues = (): FormValues => {
-        return {type: 'git', ghType: 'GitHub', write: false};
+        return {type: 'git', ghType: 'GitHub', write: false, useServicePrincipal: false};
     };
 
     private onValidateErrors(params: FormValues): FormErrors {
@@ -216,6 +222,16 @@ export class ReposList extends React.Component<
                     name: validURLValues.type === 'helm' && !validURLValues.name && 'Name is required',
                     username: !validURLValues.username && validURLValues.password && 'Username is required if password is given.',
                     password: !validURLValues.password && validURLValues.username && 'Password is required if username is given.',
+                    azServicePrincipalClientId:
+                        !validURLValues.azServicePrincipalClientId &&
+                        validURLValues.azServicePrincipalClientSecret &&
+                        validURLValues.useServicePrincipal &&
+                        'Azure Client ID is required if Azure Client Secret is given.',
+                    azServicePrincipalClientSecret:
+                        !validURLValues.azServicePrincipalClientSecret &&
+                        validURLValues.azServicePrincipalClientId &&
+                        validURLValues.useServicePrincipal &&
+                        'Azure Client Secret is required if Azure Client ID is given.',
                     tlsClientCertKey: !validURLValues.tlsClientCertKey && validURLValues.tlsClientCertData && 'TLS client cert key is required if TLS client cert is given.',
                     bearerToken:
                         (validURLValues.password && validURLValues.bearerToken && 'Either the password or the bearer token must be set, but not both.') ||
@@ -678,27 +694,57 @@ export class ReposList extends React.Component<
                                                         <FormField formApi={formApi} label='Repository URL' field='url' component={Text} />
                                                     </div>
                                                     <div className='argo-form-row'>
-                                                        <FormField formApi={formApi} label='Username (optional)' field='username' component={Text} />
+                                                        <FormField formApi={formApi} label='Use Azure Service Principal' field='useServicePrincipal' component={CheckboxField} />
                                                     </div>
-                                                    <div className='argo-form-row'>
-                                                        <FormField
-                                                            formApi={formApi}
-                                                            label='Password (optional)'
-                                                            field='password'
-                                                            component={Text}
-                                                            componentProps={{type: 'password'}}
-                                                        />
-                                                    </div>
-                                                    {formApi.getFormState().values.type === 'git' && (
-                                                        <div className='argo-form-row'>
-                                                            <FormField
-                                                                formApi={formApi}
-                                                                label='Bearer token (optional, for BitBucket Data Center only)'
-                                                                field='bearerToken'
-                                                                component={Text}
-                                                                componentProps={{type: 'password'}}
-                                                            />
-                                                        </div>
+                                                    {formApi.getFormState().values.useServicePrincipal === true && (
+                                                        <>
+                                                            <div className='argo-form-row'>
+                                                                <FormField
+                                                                    formApi={formApi}
+                                                                    label='Azure Client ID (optional)'
+                                                                    field='azServicePrincipalClientId'
+                                                                    component={Text}
+                                                                />
+                                                            </div>
+                                                            <div className='argo-form-row'>
+                                                                <FormField
+                                                                    formApi={formApi}
+                                                                    label='Azure Client Secret (optional)'
+                                                                    field='azServicePrincipalClientSecret'
+                                                                    component={Text}
+                                                                    componentProps={{type: 'password'}}
+                                                                />
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                    {formApi.getFormState().values.useServicePrincipal === false && (
+                                                        <>
+                                                            <div className='argo-form-row'>
+                                                                <FormField formApi={formApi} label='Username (optional)' field='username' component={Text} />
+                                                            </div>
+                                                            <div className='argo-form-row'>
+                                                                <FormField
+                                                                    formApi={formApi}
+                                                                    label='Password (optional)'
+                                                                    field='password'
+                                                                    component={Text}
+                                                                    componentProps={{type: 'password'}}
+                                                                />
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                    {formApi.getFormState().values.type === 'git' && formApi.getFormState().values.useServicePrincipal === false && (
+                                                        <>
+                                                            <div className='argo-form-row'>
+                                                                <FormField
+                                                                    formApi={formApi}
+                                                                    label='Bearer token (optional, for BitBucket Data Center only)'
+                                                                    field='bearerToken'
+                                                                    component={Text}
+                                                                    componentProps={{type: 'password'}}
+                                                                />
+                                                            </div>
+                                                        </>
                                                     )}
                                                     <div className='argo-form-row'>
                                                         <FormField formApi={formApi} label='TLS client certificate (optional)' field='tlsClientCertData' component={TextArea} />
@@ -730,6 +776,7 @@ export class ReposList extends React.Component<
                                                     <div className='argo-form-row'>
                                                         <FormField formApi={formApi} label='Enable OCI' field='enableOCI' component={CheckboxField} />
                                                     </div>
+
                                                     <div className='argo-form-row'>
                                                         <FormField
                                                             formApi={formApi}
@@ -947,7 +994,10 @@ export class ReposList extends React.Component<
                 forceHttpBasicAuth: params.forceHttpBasicAuth,
                 enableOCI: params.enableOCI,
                 write: params.write,
-                useAzureWorkloadIdentity: params.useAzureWorkloadIdentity
+                useAzureWorkloadIdentity: params.useAzureWorkloadIdentity,
+                useServicePrincipal: params.useServicePrincipal,
+                azServicePrincipalClientId: params.azServicePrincipalClientId,
+                azServicePrincipalClientSecret: params.azServicePrincipalClientSecret
             });
         } else {
             this.setState({connecting: true});

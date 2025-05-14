@@ -5,9 +5,12 @@ export interface HTTPSQuery {
     type: string;
     name: string;
     url: string;
-    username: string;
-    password: string;
-    bearerToken: string;
+    username?: string;
+    password?: string;
+    useServicePrincipal: boolean;
+    azServicePrincipalClientId?: string;
+    azServicePrincipalClientSecret?: string;
+    bearerToken?: string;
     tlsClientCertData: string;
     tlsClientCertKey: string;
     insecure: boolean;
@@ -97,6 +100,9 @@ export class RepositoriesService {
                 repo: q.url,
                 username: q.username,
                 password: q.password,
+                azServicePrincipalClientId: q.azServicePrincipalClientId,
+                azServicePrincipalClientSecret: q.azServicePrincipalClientSecret,
+                useServicePrincipal: q.useServicePrincipal,
                 bearerToken: q.bearerToken,
                 tlsClientCertData: q.tlsClientCertData,
                 tlsClientCertKey: q.tlsClientCertKey,
@@ -122,6 +128,9 @@ export class RepositoriesService {
                 username: q.username,
                 password: q.password,
                 bearerToken: q.bearerToken,
+                azServicePrincipalClientId: q.azServicePrincipalClientId,
+                azServicePrincipalClientSecret: q.azServicePrincipalClientSecret,
+                useServicePrincipal: q.useServicePrincipal,
                 tlsClientCertData: q.tlsClientCertData,
                 tlsClientCertKey: q.tlsClientCertKey,
                 insecure: q.insecure,
@@ -146,6 +155,9 @@ export class RepositoriesService {
                 username: q.username,
                 password: q.password,
                 bearerToken: q.bearerToken,
+                azServicePrincipalClientId: q.azServicePrincipalClientId,
+                azServicePrincipalClientSecret: q.azServicePrincipalClientSecret,
+                useServicePrincipal: q.useServicePrincipal,
                 tlsClientCertData: q.tlsClientCertData,
                 tlsClientCertKey: q.tlsClientCertKey,
                 insecure: q.insecure,

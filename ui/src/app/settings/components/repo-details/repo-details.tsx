@@ -24,27 +24,39 @@ export const RepoDetails = (props: {repo: models.Repository; save?: (params: New
                 title: 'Name',
                 view: repository.name || '',
                 edit: (formApi: FormApi) => <FormField formApi={formApi} field='name' component={Text} />
-            },
-            {
+            }
+        ];
+        if (repository.useServicePrincipal === true) {
+            items.push({
+                title: 'Azure Client ID (optional)',
+                view: repository.azServicePrincipalClientId ? '******' : '',
+                edit: (formApi: FormApi) => <FormField formApi={formApi} field='azServicePrincipalClientId' component={Text} />
+            });
+            items.push({
+                title: 'Azure Client Secret (optional)',
+                view: repository.azServicePrincipalClientSecret ? '******' : '',
+                edit: (formApi: FormApi) => <FormField formApi={formApi} field='azServicePrincipalClientSecret' component={Text} componentProps={{type: 'password'}} />
+            });
+        } else {
+            items.push({
                 title: 'Username (optional)',
                 view: repository.username || '',
                 edit: (formApi: FormApi) => <FormField formApi={formApi} field='username' component={Text} />
-            },
-            {
+            });
+            items.push({
                 title: 'Password (optional)',
                 view: repository.username ? '******' : '',
                 edit: (formApi: FormApi) => <FormField formApi={formApi} field='password' component={Text} componentProps={{type: 'password'}} />
-            }
-        ];
+            });
+        }
 
-        if (repository.type === 'git') {
+        if (repository.type === 'git' && repository.useServicePrincipal === false) {
             items.push({
                 title: 'Bearer token (optional, for BitBucket Data Center only)',
                 view: repository.bearerToken ? '******' : '',
                 edit: (formApi: FormApi) => <FormField formApi={formApi} field='bearerToken' component={Text} componentProps={{type: 'password'}} />
             });
         }
-
         if (useAuthSettingsCtx?.hydratorEnabled) {
             // Insert this item at index 1.
             const item = {
@@ -83,6 +95,7 @@ export const RepoDetails = (props: {repo: models.Repository; save?: (params: New
         type: repo.type,
         name: repo.name || '',
         url: repo.repo,
+        useServicePrincipal: repo.useServicePrincipal || false,
         username: repo.username || '',
         password: repo.password || '',
         bearerToken: repo.bearerToken || '',
